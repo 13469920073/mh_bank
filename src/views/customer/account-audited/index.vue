@@ -130,7 +130,7 @@ export default {
 
     getList() {
       this.listLoading = true
-      console.log('获取信息', this.form)
+      console.log('获取信息=====', this.form)
       accreviewinglist(this.form).then(response => {
         // this.list = response.data.items
         // this.total = response.data.total
