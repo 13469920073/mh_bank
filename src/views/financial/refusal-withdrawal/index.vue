@@ -1,5 +1,5 @@
 <!--
- * @Description: 拒绝出金列表
+ * @Description: 银行交易流水查询
  * @Date: 2021-09-10 08:40:19
 -->
 <template>
@@ -13,8 +13,8 @@
           :model="form"
           :rules="searchFormRules"
         >
-          <el-form-item label="关键词" prop="BiId">
-            <el-input ref="BiId" v-model="form.BiId" placeholder="关键词" />
+          <el-form-item label="关键词">
+            <el-input ref="BiId" v-model="form.keyWords" placeholder="关键词" />
           </el-form-item>
           <el-form-item class="search-button">
             <div class="form-button">
@@ -38,8 +38,12 @@
         >
           <el-table-column v-for="(item,index) in tableList" :key="index" :label="item.label" min-width="110px" align="center">
             <template slot-scope="{row}">
-              <span v-if="item.rowName ==='BiTime'">{{ row[item.rowName].split('.')[0] }}</span>
+              <div v-if="item.rowName ==='photo'" class="vicp-preview-item" @click="onView(row)">
+                <img :src="row[item.rowName]" style="width: 40px; height: 40px;">
+              </div>
+              <!--   <span v-if="item.rowName ==='BiTime'">{{ row[item.rowName].split('.')[0] }}</span>
               <span v-else-if="item.rowName==='BiChannel'">{{ row[item.rowName] | dict('BiChannelList') }}</span>
+              <span v-else>{{ row[item.rowName] }}</span>-->
               <span v-else>{{ row[item.rowName] }}</span>
             </template>
           </el-table-column>
@@ -49,41 +53,59 @@
       <pagination v-show="total>0" :total="total" :page.sync="form.page" :limit.sync="form.limit" @pagination="getList" />
 
     </div>
-
+    <el-dialog :visible.sync="dialogVisible" width="50%">
+      <img :src="previewpic" alt="" width="100%">
+    </el-dialog>
   </div>
 
 </template>
 
 <script>
-
+import { custoutlayreviewinglist } from '@/api/financial'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+// import { turn } from 'mock/user'
 export default {
-  name: 'RefusalWithdrawal',
+  name: 'CustList', // 客户拒绝入金审核列表
+  components: { Pagination },
   data() {
     return {
       tableKey: 0, // 表格
+      dialogVisible: false,
+      previewpic: '',
       arr: [],
-      list: null, // 表格
+      list: [
+        {
+          nickName: 'NO.73401',
+          loginAccount: '61-432012117',
+          superior: '张',
+          PartyName: '48980.5210',
+          realName: '伊藤和成',
+          ProdCategory: '张',
+          BiStateName: '张',
+          photo: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
+        },
+        {
+          nickName: 'NO.73401',
+          loginAccount: '61-432012117',
+          superior: '张',
+          PartyName: '48980.5210',
+          realName: '伊藤和成',
+          ProdCategory: '张',
+          BiStateName: '张',
+          photo: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
+        }
+      ], // 表格
       total: 0, // 分页
       form: {
         // 分页
         page: 1,
         limit: 10,
-        OrgId: '',
-        OrgName: '',
-        DivisionNo: '',
-        BiState: '',
-        BeginDate: '',
-        TransType: '001',
-        EndDate: '',
-        BiId: '',
-        ProdId: '',
-        VoucherNo: '',
-        BeginAmount: '',
-        EndAmount: '',
-        DivisionId: ''
-        // PayeeAcName: ''
+        keyWords: '',
+        pageNum: 1,
+        pageSize: 10,
+        status: ''
       },
-      showEmpty: 'query',
+      showEmpty: 'table',
       showMainPage: true,
       temp: {},
 
@@ -95,17 +117,16 @@ export default {
 
       tableList: [
         // table配置
-        { label: '昵称', rowName: 'BiId' },
-        { label: '真实姓名', rowName: 'LoginId' },
-        { label: '提现类型', rowName: 'CoreCustNo' },
-        { label: '提现数量', rowName: 'PartyNo' },
-        { label: 'USTD数量', rowName: 'PartyName' },
-        { label: '账号名称', rowName: 'BiName' },
-        { label: '账号地址', rowName: 'ProdCategory' },
-        { label: '手续费', rowName: 'ProdCategory' },
-        { label: '申请时间', rowName: 'ProdCategory' },
-        { label: '订单号', rowName: 'ProdCategory' },
-        { label: '状态', rowName: 'ProdCategory' }
+        { label: '昵称', rowName: 'nickName' },
+        { label: '真实姓名', rowName: 'realName' },
+        { label: '充值类型', rowName: 'type' },
+        { label: '充值数量', rowName: 'incomeNum' },
+        { label: 'USTD数量', rowName: 'balance' },
+        { label: '手续费', rowName: 'accountName' },
+        { label: '审核时间', rowName: 'approvalTime' },
+        { label: '订单号', rowName: 'orderId' },
+        { label: '状态', rowName: 'status' },
+        { label: '操作', rowName: 'photo' }
       ],
       option: {
         placeholder: ' 请输入金额'
@@ -117,9 +138,19 @@ export default {
 
   },
   methods: {
-
+    // 获取已审核客户
     getList() {
-
+      this.listLoading = true
+      custoutlayreviewinglist(this.form).then(response => {
+        this.list = response.data.items
+        this.total = response.data.total
+        this.listLoading = false
+      })
+    },
+    // 图片预览
+    onView(row) {
+      this.dialogVisible = true
+      this.previewpic = row.photo
     },
     clickTens(val) {
 
@@ -129,7 +160,8 @@ export default {
 
     },
     onQuery() {
-
+      this.form.page = 1
+      this.getList()
     },
 
     getBranchDialogValue(val) {
@@ -140,7 +172,9 @@ export default {
 
     },
     handle(flag) {
-
+      this.form.keyWords = ''
+      this.form.page = 1
+      this.getList()
     },
     closeProcess() {
       this.processVisible = false

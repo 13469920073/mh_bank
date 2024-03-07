@@ -1,18 +1,31 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on"
-      label-position="left">
+    <el-form
+      ref="loginForm"
+      :model="loginForm"
+      :rules="loginRules"
+      class="login-form"
+      autocomplete="on"
+      label-position="left"
+    >
 
       <div class="title-container">
-        <h3 class="title">Taurus管理系统11111</h3>
+        <h3 class="title">Taurus管理系统</h3>
       </div>
 
       <el-form-item prop="username">
         <span class="svg-container">
           <svg-icon icon-class="user" />
         </span>
-        <el-input ref="username" v-model="loginForm.username" placeholder="用户名或邮箱" name="username" type="text"
-          tabindex="1" autocomplete="on" />
+        <el-input
+          ref="username"
+          v-model="loginForm.username"
+          placeholder="用户名或邮箱"
+          name="username"
+          type="text"
+          tabindex="1"
+          autocomplete="on"
+        />
       </el-form-item>
 
       <el-tooltip v-model="capsTooltip" content="Caps lock is On" placement="right" manual>
@@ -20,26 +33,48 @@
           <span class="svg-container">
             <svg-icon icon-class="password" />
           </span>
-          <el-input :key="passwordType" ref="password" v-model="loginForm.password" :type="passwordType" placeholder="密码"
-            name="password" tabindex="2" autocomplete="on" @keyup.native="checkCapslock" @blur="capsTooltip = false"
-            @keyup.enter.native="handleLogin" />
+          <el-input
+            :key="passwordType"
+            ref="password"
+            v-model="loginForm.password"
+            :type="passwordType"
+            placeholder="密码"
+            name="password"
+            tabindex="2"
+            autocomplete="on"
+            @keyup.native="checkCapslock"
+            @blur="capsTooltip = false"
+            @keyup.enter.native="handleLogin"
+          />
           <span class="show-pwd" @click="showPwd">
             <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
           </span>
         </el-form-item>
       </el-tooltip>
-      <el-form-item ref="sms-token" prop="Token" label-width="0" style="margin-bottom: 30px;">
+      <!-- <el-form-item ref="sms-token" prop="Token" label-width="0" style="margin-bottom: 30px;">
         <span class="svg-container">
           <svg-icon icon-class="lock" />
         </span>
-        <el-input ref="token" v-model.trim="loginForm.Token" maxlength="4" autofocus class="login-form-token" tabindex="0"
-          placeholder="验证码" @keyup.enter.native="handleLogin">
+       <el-input
+          ref="token"
+          v-model.trim="loginForm.Token"
+          maxlength="4"
+          autofocus
+          class="login-form-token"
+          tabindex="0"
+          placeholder="验证码"
+          @keyup.enter.native="handleLogin"
+        >
           <img slot="suffix" class="capture" :src="options.imgSrc" alt="加载中.." title="点击刷新" @click="getCaptchaToken()">
         </el-input>
-      </el-form-item>
+      </el-form-item>-->
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;"
-        @click.native.prevent="handleLogin">登录</el-button>
+      <el-button
+        :loading="loading"
+        type="primary"
+        style="width:100%;margin-bottom:30px;"
+        @click.native.prevent="handleLogin"
+      >登录</el-button>
 
       <!-- <div style="position:relative">
         <div class="tips">
@@ -114,7 +149,7 @@ export default {
   },
   watch: {
     $route: {
-      handler: function (route) {
+      handler: function(route) {
         const query = route.query
         if (query) {
           this.redirect = query.redirect
@@ -160,14 +195,15 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm)
-            .then(() => {
-              this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
-              this.loading = false
-            })
-            .catch(() => {
-              this.loading = false
-            })
+          // this.$store.dispatch('user/login', this.loginForm)
+          //   .then(() => {
+          //     console.log('======')
+          //     this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
+          //     this.loading = false
+          //   })
+          //   .catch(() => {
+          //     this.loading = false
+          //   })
         } else {
           console.log('error submit!!')
           return false

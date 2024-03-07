@@ -13,8 +13,8 @@
           :model="form"
           :rules="searchFormRules"
         >
-          <el-form-item label="关键词" prop="BiId">
-            <el-input ref="BiId" v-model="form.BiId" placeholder="关键词" />
+          <el-form-item label="关键词">
+            <el-input ref="BiId" v-model="form.keyWords" placeholder="关键词" />
           </el-form-item>
           <el-form-item class="search-button">
             <div class="form-button">
@@ -38,9 +38,14 @@
         >
           <el-table-column v-for="(item,index) in tableList" :key="index" :label="item.label" min-width="110px" align="center">
             <template slot-scope="{row}">
-              <span v-if="item.rowName ==='BiTime'">{{ row[item.rowName].split('.')[0] }}</span>
-              <span v-else-if="item.rowName==='BiChannel'">{{ row[item.rowName] | dict('BiChannelList') }}</span>
-              <span v-else>{{ row[item.rowName] }}</span>
+              <span> {{ row[item.rowName] }}</span>
+            </template>
+          </el-table-column>
+          <!-- 操作 -->
+          <el-table-column label="操作" width="220">
+            <template slot-scope="scope">
+              <el-button size="small" type="primary" @click="onEdit(scope.row,scope.$index)">编辑</el-button>
+              <el-button size="small" type="danger" @click="onDel(scope.row,scope.$index)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -49,44 +54,89 @@
       <pagination v-show="total>0" :total="total" :page.sync="form.page" :limit.sync="form.limit" @pagination="getList" />
 
     </div>
-
+    <el-dialog :visible.sync="dialogVisible" :title="dialogType==='edit'?'修改':'新增'">
+      <el-form :model="agency" label-width="80px" :rules="rules" label-position="left">
+        <el-form-item label="代理名称" prop="nickName">
+          <el-input v-model="agency.nickName" placeholder="请输入代理名称" />
+        </el-form-item>
+        <el-form-item label="登录账号" prop="userName">
+          <el-input v-model="agency.userName" placeholder="请输入登录账号" />
+          <div style="color:red">*不填为原密码</div>
+        </el-form-item>
+        <el-form-item label="登录密码" prop="passWord">
+          <el-input v-model="agency.passWord" placeholder="请输入登录密码" />
+        </el-form-item>
+        <el-form-item label="分佣比例" prop="shareRatio">
+          <el-input v-model="agency.shareRatio" placeholder="请输入分佣比例" />
+          <span>%</span>
+        </el-form-item>
+      </el-form>
+      <div style="text-align:right;">
+        <el-button type="danger" @click="save">确定</el-button>
+        <el-button type="primary" @click="confirmRole">取消</el-button>
+      </div>
+    </el-dialog>
   </div>
 
 </template>
 
 <script>
-
+import { getumslist, updateums, deleteums } from '@/api/agency'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 export default {
-  name: 'AgencyList',
+  name: 'CustList', // 代理列表
+  components: { Pagination },
   data() {
     return {
       tableKey: 0, // 表格
+      dialogVisible: false,
+      dialogType: 'add',
       arr: [],
-      list: null, // 表格
+      agency: {
+        shareRatio: '',
+        nickName: '',
+        oldPwd: '',
+        passWord: '',
+        userName: ''
+      },
+      list: [
+        {
+          nickName: 'NO.73401',
+          loginAccount: '61-432012117',
+          superior: '张',
+          PartyName: '48980.5210',
+          realName: '伊藤和成',
+          ProdCategory: '张',
+          BiStateName: '张'
+        },
+        {
+          nickName: 'NO.73401',
+          loginAccount: '61-432012117',
+          superior: '张',
+          PartyName: '48980.5210',
+          realName: '伊藤和成',
+          ProdCategory: '张',
+          BiStateName: '张'
+        }
+      ], // 表格
       total: 0, // 分页
       form: {
         // 分页
         page: 1,
         limit: 10,
-        OrgId: '',
-        OrgName: '',
-        DivisionNo: '',
-        BiState: '',
-        BeginDate: '',
-        TransType: '001',
-        EndDate: '',
-        BiId: '',
-        ProdId: '',
-        VoucherNo: '',
-        BeginAmount: '',
-        EndAmount: '',
-        DivisionId: ''
-        // PayeeAcName: ''
+        keyWords: '',
+        pageNum: 1,
+        pageSize: 10,
+        status: ''
       },
-      showEmpty: 'query',
+      showEmpty: 'table',
       showMainPage: true,
       temp: {},
-
+      rules: {
+        shareRatio: [{ required: true, message: '分佣比例不能为空', trigger: 'change' }],
+        nickName: [{ required: true, message: '代理名称不能为空', trigger: 'change' }],
+        userName: [{ required: true, message: '登录账号不能为空', trigger: 'blur' }]
+      },
       searchFormRules: {
         OrgName: [{ required: true, message: '请选择机构', trigger: 'change' }]
 
@@ -95,14 +145,11 @@ export default {
 
       tableList: [
         // table配置
-        { label: 'ID', rowName: 'BiId' },
-        { label: '代理名称', rowName: 'LoginId' },
-        { label: '登录账号', rowName: 'CoreCustNo' },
-        { label: '代理邀请码', rowName: 'PartyNo' },
-        { label: '分佣比例', rowName: 'PartyName' },
-        { label: '创建日期', rowName: 'BiName' },
-        { label: '操作', rowName: 'ProdCategory' }
-
+        { label: '代理名称', rowName: 'nickName' },
+        { label: '登录账号', rowName: 'userName' },
+        { label: '代理邀请码', rowName: 'inviteCode' },
+        { label: '分佣比例', rowName: 'shareRatio' },
+        { label: '创建日期', rowName: 'createTime' }
       ],
       option: {
         placeholder: ' 请输入金额'
@@ -116,7 +163,13 @@ export default {
   methods: {
 
     getList() {
-
+      this.listLoading = true
+      console.log('获取信息', this.form)
+      getumslist(this.form).then(response => {
+        this.list = response.data.items
+        this.total = response.data.total
+        this.listLoading = false
+      })
     },
     clickTens(val) {
 
@@ -126,9 +179,48 @@ export default {
 
     },
     onQuery() {
-
+      this.form.page = 1
+      this.getList()
     },
-
+    // 编辑
+    onEdit(row, index) {
+      console.log('通过审核')
+      this.dialogVisible = true
+      this.dialogType = 'edit'
+      this.agency = row
+    },
+    // 不删除
+    onDel(row, index) {
+      this.$alert('确定删除该代理吗', '提示', {
+        confirmButtonText: '确定',
+        callback: action => {
+          deleteums({ id: row.id }).then(response => {
+            this.$message({
+              type: 'success',
+              message: `删除成功`
+            })
+          })
+        }
+      })
+    },
+    save() {
+      console.log('queding', this.agency)
+      this.$refs['form'].validate((valid) => {
+        if (valid) {
+          updateums(this.agency).then(() => {
+            console.log('======')
+            this.dialogFormVisible = false
+            this.$notify({
+              title: '提示',
+              message: '修改成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    confirmRole() { this.dialogVisible = false },
     getBranchDialogValue(val) {
 
     },
@@ -137,7 +229,9 @@ export default {
 
     },
     handle(flag) {
-
+      this.form.keyWords = ''
+      this.form.page = 1
+      this.getList()
     },
     closeProcess() {
       this.processVisible = false

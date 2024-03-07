@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function login(data) {
   return request({
-    url: '/vue-element-admin/user/login',
+    url: '/admin/auth/login',
     method: 'post',
     data
   })
@@ -22,3 +22,12 @@ export function logout() {
     method: 'post'
   })
 }
+
+// 获取用户信息
+export function getAdmininfo() {
+  return request({
+    url: '/admin/auth/admininfo',
+    method: 'post'
+  })
+}
+

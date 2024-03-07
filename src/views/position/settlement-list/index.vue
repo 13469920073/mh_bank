@@ -1,5 +1,5 @@
 <!--
- * @Description: 结算列表
+ * @Description: 银行交易流水查询
  * @Date: 2021-09-10 08:40:19
 -->
 <template>
@@ -13,8 +13,8 @@
           :model="form"
           :rules="searchFormRules"
         >
-          <el-form-item label="关键词" prop="BiId">
-            <el-input ref="BiId" v-model="form.BiId" placeholder="关键词" />
+          <el-form-item label="关键词">
+            <el-input ref="BiId" v-model="form.keyWords" placeholder="关键词" />
           </el-form-item>
           <el-form-item class="search-button">
             <div class="form-button">
@@ -38,8 +38,12 @@
         >
           <el-table-column v-for="(item,index) in tableList" :key="index" :label="item.label" min-width="110px" align="center">
             <template slot-scope="{row}">
-              <span v-if="item.rowName ==='BiTime'">{{ row[item.rowName].split('.')[0] }}</span>
+              <div v-if="item.rowName ==='photo'" class="vicp-preview-item" @click="onView(row)">
+                <img :src="row[item.rowName]" style="width: 40px; height: 40px;">
+              </div>
+              <!--   <span v-if="item.rowName ==='BiTime'">{{ row[item.rowName].split('.')[0] }}</span>
               <span v-else-if="item.rowName==='BiChannel'">{{ row[item.rowName] | dict('BiChannelList') }}</span>
+              <span v-else>{{ row[item.rowName] }}</span>-->
               <span v-else>{{ row[item.rowName] }}</span>
             </template>
           </el-table-column>
@@ -49,41 +53,59 @@
       <pagination v-show="total>0" :total="total" :page.sync="form.page" :limit.sync="form.limit" @pagination="getList" />
 
     </div>
-
+    <el-dialog :visible.sync="dialogVisible" width="50%">
+      <img :src="previewpic" alt="" width="100%">
+    </el-dialog>
   </div>
 
 </template>
 
 <script>
-
+import { custcheckoutlist } from '@/api/position'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+// import { turn } from 'mock/user'
 export default {
-  name: 'SettlementList',
+  name: 'CustList', // 结算列表
+  components: { Pagination },
   data() {
     return {
       tableKey: 0, // 表格
+      dialogVisible: false,
+      previewpic: '',
       arr: [],
-      list: null, // 表格
+      list: [
+        {
+          nickName: 'NO.73401',
+          loginAccount: '61-432012117',
+          superior: '张',
+          PartyName: '48980.5210',
+          realName: '伊藤和成',
+          ProdCategory: '张',
+          BiStateName: '张',
+          photo: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
+        },
+        {
+          nickName: 'NO.73401',
+          loginAccount: '61-432012117',
+          superior: '张',
+          PartyName: '48980.5210',
+          realName: '伊藤和成',
+          ProdCategory: '张',
+          BiStateName: '张',
+          photo: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
+        }
+      ], // 表格
       total: 0, // 分页
       form: {
         // 分页
         page: 1,
         limit: 10,
-        OrgId: '',
-        OrgName: '',
-        DivisionNo: '',
-        BiState: '',
-        BeginDate: '',
-        TransType: '001',
-        EndDate: '',
-        BiId: '',
-        ProdId: '',
-        VoucherNo: '',
-        BeginAmount: '',
-        EndAmount: '',
-        DivisionId: ''
-        // PayeeAcName: ''
+        keyWords: '',
+        pageNum: 1,
+        pageSize: 10,
+        status: ''
       },
-      showEmpty: 'query',
+      showEmpty: 'table',
       showMainPage: true,
       temp: {},
 
@@ -95,23 +117,23 @@ export default {
 
       tableList: [
         // table配置
-        { label: '订单编号', rowName: 'BiId' },
-        { label: '昵称', rowName: 'LoginId' },
-        { label: '建仓时间', rowName: 'CoreCustNo' },
-        { label: '持仓类型', rowName: 'PartyNo' },
-        { label: '币种', rowName: 'PartyName' },
-        { label: '总持仓数量', rowName: 'BiName' },
-        { label: '持仓价', rowName: 'ProdCategory' },
-        { label: '平仓价', rowName: 'ProdCategory' },
-        { label: '杠杆倍数', rowName: 'ProdCategory' },
-        { label: '占用保证金', rowName: 'ProdCategory' },
-        { label: '止盈率', rowName: 'ProdCategory' },
-        { label: '止损率', rowName: 'ProdCategory' },
-        { label: '止盈价格', rowName: 'ProdCategory' },
-        { label: '止损价格', rowName: 'ProdCategory' },
-        { label: '收益', rowName: 'ProdCategory' },
-        { label: '手续费', rowName: 'ProdCategory' },
-        { label: '是否强平', rowName: 'ProdCategory' }
+        { label: '订单编号', rowName: 'orderId' },
+        { label: '昵称', rowName: 'nickName' },
+        { label: '建仓时间', rowName: 'createTime' },
+        { label: '持仓类型', rowName: 'holdType' },
+        { label: '币种', rowName: 'type' },
+        { label: '总持仓数量', rowName: 'holdNum' },
+        { label: '持仓价', rowName: 'holdPrice' },
+        { label: '平仓价', rowName: 'overPrice' },
+        { label: '杠杆倍数', rowName: 'times' },
+        { label: '占用保证金', rowName: 'takeDeposit' },
+        { label: '止盈率', rowName: 'profitRatio' },
+        { label: '止损率', rowName: 'stopRatio' },
+        { label: '止盈价格', rowName: 'profitPrice' },
+        { label: '止损价格', rowName: 'stopPrice' },
+        { label: '收益', rowName: 'revenue' },
+        { label: '手续费', rowName: 'premiumNum' },
+        { label: '是否强平', rowName: 'isClose' }
       ],
       option: {
         placeholder: ' 请输入金额'
@@ -123,9 +145,19 @@ export default {
 
   },
   methods: {
-
+    // 获取结算列表客户
     getList() {
-
+      this.listLoading = true
+      custcheckoutlist(this.form).then(response => {
+        this.list = response.data.items
+        this.total = response.data.total
+        this.listLoading = false
+      })
+    },
+    // 图片预览
+    onView(row) {
+      this.dialogVisible = true
+      this.previewpic = row.photo
     },
     clickTens(val) {
 
@@ -135,7 +167,8 @@ export default {
 
     },
     onQuery() {
-
+      this.form.page = 1
+      this.getList()
     },
 
     getBranchDialogValue(val) {
@@ -146,7 +179,9 @@ export default {
 
     },
     handle(flag) {
-
+      this.form.keyWords = ''
+      this.form.page = 1
+      this.getList()
     },
     closeProcess() {
       this.processVisible = false

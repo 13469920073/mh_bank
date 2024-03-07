@@ -1,7 +1,21 @@
 <template>
-  <div class="dashboard-editor-container">
+  <div class="dashboard-editor-container" style="background: #fff;">
     <div class=" clearfix">
-      <pan-thumb :image="avatar" style="float: left">
+      <el-row>
+        <el-col :span="8"><div class="grid-content bg-purple" />
+          代理名： {{ form.nickName }}
+        </el-col>
+        <el-col :span="8"><div class="grid-content bg-purple-light" />
+          联系方式： {{ form.phonenumber }}
+        </el-col>
+        <el-col :span="8"><div class="grid-content bg-purple" />
+          创建时间： {{ form.createTime }}
+        </el-col>
+        <el-col :span="8" style="margin-top: 20px;">
+          邀请码： <span style="font-size: 18px;">{{ form.inviteCode }}</span>
+        </el-col>
+      </el-row>
+      <!-- <pan-thumb :image="avatar" style="float: left">
         Your roles:
         <span v-for="item in roles" :key="item" class="pan-info-roles">{{ item }}</span>
       </pan-thumb>
@@ -9,25 +23,33 @@
       <div class="info-container">
         <span class="display_name">{{ name }}</span>
         <span style="font-size:20px;padding-top:20px;display:inline-block;">Editor's Dashboard</span>
-      </div>
+      </div> -->
     </div>
-    <div>
+    <!-- <div>
       <img :src="emptyGif" class="emptyGif">
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script>
+import { getAdmininfo } from '@/api/user'
 import { mapGetters } from 'vuex'
-import PanThumb from '@/components/PanThumb'
-import GithubCorner from '@/components/GithubCorner'
+// import PanThumb from '@/components/PanThumb'
+// import GithubCorner from '@/components/GithubCorner'
+// import { from } from 'core-js/core/array'
 
 export default {
   name: 'DashboardEditor',
-  components: { PanThumb, GithubCorner },
+  // components: { PanThumb, GithubCorner },
   data() {
     return {
-      emptyGif: 'https://wpimg.wallstcn.com/0e03b7da-db9e-4819-ba10-9016ddfdaed3'
+      form: {
+        phonenumber: '',
+        nickName: '',
+        createTime: '',
+        inviteCode: '486307'
+      }
+      // emptyGif: 'https://wpimg.wallstcn.com/0e03b7da-db9e-4819-ba10-9016ddfdaed3'
     }
   },
   computed: {
@@ -36,6 +58,19 @@ export default {
       'avatar',
       'roles'
     ])
+  },
+  created() {
+    // this.getUserInfo()
+  },
+  methods: {
+
+    getUserInfo() {
+      console.log('获取用户信息')
+      getAdmininfo().then((res) => {
+        console.log('======', res)
+        this.form = res
+      })
+    }
   }
 }
 </script>

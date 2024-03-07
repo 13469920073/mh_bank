@@ -14,27 +14,19 @@
           :rules="rules"
         >
           <el-row>
-            <el-col :span="12">
-              <el-form-item label="代理名称" prop="nickName">
-                <el-input ref="nickName" v-model="form.nickName" placeholder="代理名称" />
+            <el-col :span="24">
+              <el-form-item label="原始密码" prop="oldPwd">
+                <el-input ref="oldPwd" v-model="form.oldPwd" type="password" placeholder="请输入原始密码" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
-              <el-form-item label="登录账号" prop="userName">
-                <el-input ref="userName" v-model="form.userName" placeholder="登录账号" />
+            <el-col :span="24">
+              <el-form-item label="新密码" prop="passWord">
+                <el-input ref="passWord" v-model="form.passWord" type="password" placeholder="请输入新密码" />
               </el-form-item>
             </el-col>
-
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="初始密码" prop="passWord">
-                <el-input ref="passWord" v-model="form.passWord" placeholder="初始密码" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="分佣比例%" prop="shareRatio">
-                <el-input ref="shareRatio" v-model="form.shareRatio" placeholder="分佣比例" />
+            <el-col :span="24">
+              <el-form-item label="重复新密码" prop="newPassWord">
+                <el-input ref="newPassWord" v-model="form.newPassWord" type="password" placeholder="重复新密码" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -50,10 +42,19 @@
 </template>
 
 <script>
-import { addums } from '@/api/agency'
+import { changepwd } from '@/api/editPassword'
 export default {
   name: 'CreatedProxy', // 代理新增
   data() {
+    const checkPwd = (rule, value, callback) => {
+      if (value.trim().length === 0) {
+        callback(new Error('请输入确认密码'))
+      } else if (value !== this.form.passWord) {
+        callback(new Error('两次密码不一致'))
+      } else {
+        callback()
+      }
+    }
     return {
       tableKey: 0, // 表格
       arr: [],
@@ -64,17 +65,24 @@ export default {
         passWord: '',
         oldPwd: '',
         nickName: '',
-        shareRatio: ''
+        shareRatio: '',
+        newPassWord: ''
       },
       showEmpty: 'query',
       showMainPage: true,
       temp: {},
 
       rules: {
-        shareRatio: [{ required: true, message: '分佣比例不能为空', trigger: 'blur' }],
-        nickName: [{ required: true, message: '代理名称不能为空', trigger: 'blur' }],
-        userName: [{ required: true, message: '登录账号不能为空', trigger: 'blur' }],
-        passWord: [{ required: true, message: '初始密码不能为空', trigger: 'blur' }]
+        oldPwd: [{ required: true, message: '原始密码不能为空', trigger: 'blur' }],
+        // newPassWord: [{ required: true, message: '新密码不能为空', trigger: 'blur' }],
+        newPassWord: [
+          {
+            validator: checkPwd,
+            required: true,
+            trigger: 'blur'
+          }
+        ],
+        passWord: [{ required: true, message: '新密码不能为空', trigger: 'blur' }]
       },
       processVisible: false,
 
@@ -112,13 +120,14 @@ export default {
     },
     // 保存
     handle(flag) {
+      console.log('this.form', this.form)
       this.$refs['form'].validate((valid) => {
         if (valid) {
-          addums(this.form).then(() => {
+          changepwd(this.form).then(() => {
             console.log('======')
             this.$notify({
               title: '提示',
-              message: '新增成功',
+              message: '修改成功',
               type: 'success',
               duration: 2000
             })
